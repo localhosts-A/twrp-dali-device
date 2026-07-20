@@ -1,0 +1,21 @@
+cc_binary {
+    name: "se_omapi",
+    srcs: [
+        "main.cpp",
+        "Channel.cpp",
+        "Reader.cpp",
+        "Service.cpp",
+        "Session.cpp",
+        "Terminal.cpp",
+        "internal/ByteArrayConverter.cpp",
+    ],
+    local_include_dirs: ["include"],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "libutils",
+        "android.hardware.secure_element-V1-ndk",
+        "android.se.omapi-V1-ndk",
+    ],
+    recovery_available: true,
+}

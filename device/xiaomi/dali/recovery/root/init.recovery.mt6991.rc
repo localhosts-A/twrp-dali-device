@@ -1,0 +1,112 @@
+# USB controller and configfs mode copied from the stock recovery ramdisk.
+on init
+    setprop sys.usb.configfs 1
+    setprop sys.usb.controller "16701000.usb0"
+    setprop ro.hardware.gatekeeper mitee
+    mkdir /data/misc 0771 system system
+    mkdir /data/misc/keystore 0700 keystore keystore
+    mkdir /data/misc/gatekeeper 0700 system system
+
+    # Keystore2 and the MITEe HALs are pulled from this device's system/vendor
+    # partitions. These recovery-root paths lose their labels while the CPIO is
+    # unpacked, so restore them before servicemanager reads VINTF or starts a
+    # security service.
+    restorecon /system/bin/linker64
+    restorecon /system/bin/keystore2
+    restorecon /system/bin/toybox
+    restorecon /system/etc/ld.config.txt
+    restorecon /system/etc/selinux/plat_keystore2_key_contexts
+    restorecon_recursive /system/lib64
+    restorecon_recursive /system/etc/vintf
+    restorecon_recursive /vendor/etc/vintf
+    restorecon_recursive /data/misc
+
+# These definitions are copied from the connected device's running stock RC
+# files. They are deliberately limited to the FBE dependency chain.
+service tee-supplicant /vendor/bin/tee-supplicant
+    class core
+    user system
+    group system secure_element nfc
+    capabilities SYS_RAWIO
+    disabled
+
+service vendor.keymint-mitee /vendor/bin/hw/android.hardware.security.keymint@3.0-service.mitee
+    class early_hal
+    user system
+    group system drmrpc
+    disabled
+
+service vendor.gatekeeper_mitee /vendor/bin/hw/android.hardware.gatekeeper-service.mitee
+    class hal
+    user system
+    group system
+    disabled
+
+service vendor.weaver_nxp /vendor/bin/hw/android.hardware.weaver-service.nxp
+    class hal
+    user 2902
+    group system drmrpc
+    capabilities WAKE_ALARM
+    disabled
+
+service vendor.secure_element_hal_service /vendor/bin/hw/vendor.xiaomi.hardware.secure_element-service
+    class early_hal
+    user system
+    group system secure_element nfc
+    disabled
+
+# Goodix later-init starts in raw/THP mode. The connected device only begins
+# reporting ABS_MT events after this Xiaomi framework callback selects the AP
+# coordinate path. Module completion precedes later-init by about 140 ms.
+on property:twrp.modules.loaded=true
+    # beforemodules.sh mounted the active ODM and verified the Dali MITEe TA
+    # payload. Dali builds preserve that mount for this recovery session.
+    wait /odm/mitee/ta 5
+    mkdir /data/vendor 0771 root root
+    mkdir /data/vendor/mitee 0755 system system
+    mkdir /data/vendor/thh 0755 system system
+    restorecon_recursive /data/vendor
+    chmod 0660 /dev/tee0
+    chmod 0660 /dev/teepriv0
+    chmod 0660 /dev/rpmb0
+    chmod 0660 /dev/ufs-bsg0
+    chmod 0660 /dev/0:0:0:49476
+    wait /dev/p73 5
+    restorecon /dev/p73
+    chmod 0660 /dev/p73
+    chmod 0666 /dev/kmsg
+    chown system system /dev/tee0
+    chown system system /dev/teepriv0
+    chown system system /dev/rpmb0
+    chown system system /dev/ufs-bsg0
+    chown system system /dev/0:0:0:49476
+    chown nfc nfc /dev/p73
+    mkdir /mnt/vendor/persist/data 0755 system system
+    mkdir /mnt/vendor/persist/fdsd 0755 system system
+    restorecon_recursive /mnt/vendor/persist
+    setprop vendor.teefs_state ready
+    start vendor.secure_element_hal_service
+    start tee-supplicant
+    wait /sys/class/touch/touch_dev/enable_touch_raw 5
+    # Measured Goodix later-init settles in about 140 ms after module load;
+    # keep a 250 ms margin while avoiding the old one-second boot stall.
+    exec -- /system/bin/toybox sleep 0.25
+    write /sys/class/touch/touch_dev/enable_touch_raw 0
+    setprop dali.crypto.tee.requested 1
+
+# The real /vendor becomes available after the recovery fs trigger. Follow the
+# stock Dali FBE dependency order once tee-supplicant has entered its receive
+# loop instead of starting every crypto daemon in one init action.
+on property:dali.crypto.tee.requested=1 && property:init.svc.tee-supplicant=running
+    enable vendor.keymint-mitee
+    start vendor.keymint-mitee
+    setprop dali.crypto.keymint.requested 1
+
+on property:dali.crypto.keymint.requested=1 && property:init.svc.vendor.keymint-mitee=running
+    start vendor.gatekeeper_mitee
+    start vendor.weaver_nxp
+    setprop dali.crypto.hals.requested 1
+
+on property:dali.crypto.hals.requested=1 && property:init.svc.vendor.gatekeeper_mitee=running && property:init.svc.vendor.weaver_nxp=running
+    start keystore2
+    setprop dali.crypto.services.requested 1

@@ -1,0 +1,48 @@
+diff --git a/Decrypt.cpp b/Decrypt.cpp
+index a02bad8..146583b 100755
+--- a/Decrypt.cpp
++++ b/Decrypt.cpp
+@@ -428,14 +428,22 @@ bool Get_Weaver_Data(const std::string& spblob_path, const std::string& handle_s
+ 		printf("Get_Weaver_Data: No weaver file found for %s\n", handle_str.c_str());
+ 		return found_file;
+ 	} else {
+-		// output_hex(weaver_data.data(), weaver_data.size());printf("\n");
+-		const unsigned char* byteptr = (const unsigned char*)weaver_data.data();
+-		wd->version = *byteptr;
+-		// printf("weaver version %i\n", wd->version);
+-		const int* intptr = (const int*)weaver_data.data() + sizeof(unsigned char);
+-		wd->slot = *intptr;
+-		//endianswap(&wd->slot); not needed
+-		// printf("weaver slot %i\n", wd->slot);
++		constexpr unsigned char kWeaverDataVersion = 1;
++		constexpr size_t kWeaverDataSize = sizeof(wd->version) + sizeof(wd->slot);
++		if (weaver_data.size() != kWeaverDataSize) {
++			printf("Get_Weaver_Data: Invalid data size %zu\n", weaver_data.size());
++			return false;
++		}
++
++		wd->version = static_cast<unsigned char>(weaver_data[0]);
++		if (wd->version != kWeaverDataVersion) {
++			printf("Get_Weaver_Data: Unsupported version %u\n", wd->version);
++			return false;
++		}
++
++		memcpy(&wd->slot, weaver_data.data() + sizeof(wd->version), sizeof(wd->slot));
++		endianswap(&wd->slot);
++		printf("Get_Weaver_Data: Parsed version and slot\n");
+ 	}
+ 	return found_file;
+ }
+diff --git a/KeyStorage.cpp b/KeyStorage.cpp
+index a186c04..e6c97a6 100644
+--- a/KeyStorage.cpp
++++ b/KeyStorage.cpp
+@@ -360,7 +360,7 @@ static KeystoreOperation BeginKeystoreOp(Keystore& keystore, const std::string&
+     if (!opHandle) return opHandle;
+ 
+     // If key blob wasn't upgraded, nothing left to do.
+-    // if (!opHandle.getUpgradedBlob()) return opHandle;
++    if (!opHandle.getUpgradedBlob()) return opHandle;
+ 
+ //     if (already_upgraded) {
+ //         LOG(ERROR) << "Unexpected case; already-upgraded key " << upgraded_blob_file

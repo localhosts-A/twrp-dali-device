@@ -1,0 +1,4 @@
+# Recovery mode skips first-stage mounts. Keep this deliberately limited to
+# ODM, whose MITEe TA payload is needed before the crypto services start.
+odm /odm erofs ro wait,slotselect,logical
+odm /odm ext4 ro wait,slotselect,logical

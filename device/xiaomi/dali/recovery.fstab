@@ -1,0 +1,31 @@
+# Source                               Mount point          Type   Mount flags                                      fs_mgr/TWRP flags
+system                                 /system              erofs  ro                                                wait,slotselect,logical,first_stage_mount
+system                                 /system              ext4   ro                                                wait,slotselect,logical,first_stage_mount
+system_ext                             /system_ext          erofs  ro                                                wait,slotselect,logical,first_stage_mount
+system_ext                             /system_ext          ext4   ro                                                wait,slotselect,logical,first_stage_mount
+system_dlkm                            /system_dlkm         erofs  ro                                                wait,slotselect,logical,first_stage_mount
+system_dlkm                            /system_dlkm         ext4   ro                                                wait,slotselect,logical,first_stage_mount
+product                                /product             erofs  ro                                                wait,slotselect,logical,first_stage_mount
+product                                /product             ext4   ro                                                wait,slotselect,logical,first_stage_mount
+vendor                                 /vendor              erofs  ro                                                wait,slotselect,logical,first_stage_mount
+vendor                                 /vendor              ext4   ro                                                wait,slotselect,logical,first_stage_mount
+vendor_dlkm                            /vendor_dlkm         erofs  ro                                                wait,slotselect,logical,first_stage_mount
+vendor_dlkm                            /vendor_dlkm         ext4   ro                                                wait,slotselect,logical,first_stage_mount
+odm                                    /odm                 erofs  ro                                                wait,slotselect,logical,first_stage_mount
+odm                                    /odm                 ext4   ro                                                wait,slotselect,logical,first_stage_mount
+odm_dlkm                               /odm_dlkm            erofs  ro                                                wait,slotselect,logical,first_stage_mount
+odm_dlkm                               /odm_dlkm            ext4   ro                                                wait,slotselect,logical,first_stage_mount
+/dev/block/by-name/metadata            /metadata            f2fs   noatime,nosuid,nodev,discard                     wait,check,formattable,first_stage_mount,backup=1
+/dev/block/by-name/userdata            /data                f2fs   noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,gc_merge,atgc,age_extent_cache,inlinecrypt wait,check,formattable,quota,latemount,resize,reservedsize=128m,checkpoint=fs,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption,fsverity
+/dev/block/by-name/rescue              /cache               ext4   noatime,nosuid,nodev,discard                    wait,check,formattable,nofail
+/dev/block/by-name/persist             /persist             ext4   noatime,nosuid,nodev                            wait,check,backup=1
+/dev/block/by-name/misc                /misc                emmc   defaults                                          defaults
+/dev/block/by-name/boot                /boot                emmc   defaults                                          wait,slotselect,backup=1,flashimg=1,display="Boot"
+/dev/block/by-name/init_boot           /init_boot           emmc   defaults                                          wait,slotselect,backup=1,flashimg=1,display="Init Boot"
+/dev/block/by-name/vendor_boot         /vendor_boot         emmc   defaults                                          wait,slotselect,backup=1,flashimg=1,display="Vendor Boot"
+/dev/block/by-name/dtbo                /dtbo                emmc   defaults                                          wait,slotselect,backup=1,flashimg=1,display="DTBO"
+/dev/block/by-name/vbmeta              /vbmeta              emmc   defaults                                          wait,slotselect,backup=1,flashimg=1,display="VBMeta"
+/dev/block/by-name/vbmeta_system       /vbmeta_system       emmc   defaults                                          wait,slotselect,backup=1,flashimg=1,display="VBMeta System"
+/dev/block/by-name/vbmeta_vendor       /vbmeta_vendor       emmc   defaults                                          wait,slotselect,backup=1,flashimg=1,display="VBMeta Vendor"
+/dev/block/by-name/super               /super               emmc   defaults                                          wait,backup=1,flashimg=1,display="Super"
+/devices/platform/soc/16701000.usb0/16700000.xhci0/usb* /usb_otg auto defaults voldmanaged=usb:auto

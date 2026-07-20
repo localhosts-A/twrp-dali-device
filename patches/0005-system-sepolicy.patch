@@ -1,0 +1,19 @@
+diff --git a/private/secure_element.te b/private/secure_element.te
+index fd3b688..0a48de9 100644
+--- a/private/secure_element.te
++++ b/private/secure_element.te
+@@ -3,7 +3,13 @@ typeattribute secure_element coredomain;
+ app_domain(secure_element)
+ 
+ binder_service(secure_element)
+-add_service(secure_element, secure_element_service)
++ifelse(target_recovery, `true', `
++  # The native OMAPI bridge runs in the recovery domain because the Android
++  # Java secure-element process is not available in recovery.
++  allow recovery secure_element_service:service_manager { add find };
++', `
++  add_service(secure_element, secure_element_service)
++')
+ 
+ allow secure_element app_api_service:service_manager find;
+ hal_client_domain(secure_element, hal_secure_element)

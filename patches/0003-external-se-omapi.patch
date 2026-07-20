@@ -1,0 +1,63 @@
+diff --git a/Session.cpp b/Session.cpp
+index 2b1bb6b..f0caa1f 100644
+--- a/Session.cpp
++++ b/Session.cpp
+@@ -82,7 +82,7 @@ SecureElementSession::~SecureElementSession() = default;
+ 
+ ::ndk::ScopedAStatus SecureElementSession::openBasicChannel(const std::vector<uint8_t>& aid, int8_t p2,
+     const std::shared_ptr<ISecureElementListener>& listener, std::shared_ptr<ISecureElementChannel>* outChannel) {
+-    LOG(INFO) << __func__ << " AID=" << hex2string(aid) << ", P2=" << int(p2);
++    LOG(INFO) << __func__ << " P2=" << int(p2);
+     if (mIsClosed) {
+         *outChannel = nullptr;
+         return ::ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(EX_SERVICE_SPECIFIC,
+@@ -120,7 +120,7 @@ SecureElementSession::~SecureElementSession() = default;
+ 
+ ::ndk::ScopedAStatus SecureElementSession::openLogicalChannel(const std::vector<uint8_t>& aid, int8_t p2,
+     const std::shared_ptr<ISecureElementListener>& listener, std::shared_ptr<ISecureElementChannel>* outChannel) {
+-    LOG(INFO) << __func__ << " AID=" << hex2string(aid) << ", P2=" << int(p2);
++    LOG(INFO) << __func__ << " P2=" << int(p2);
+     if (mIsClosed) {
+         *outChannel = nullptr;
+         return ::ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(EX_SERVICE_SPECIFIC,
+@@ -156,4 +156,4 @@ SecureElementSession::~SecureElementSession() = default;
+     return ::ndk::ScopedAStatus::ok();
+ }
+ 
+-}
+\ No newline at end of file
++}
+diff --git a/Terminal.cpp b/Terminal.cpp
+index b5e2709..65bee1b 100644
+--- a/Terminal.cpp
++++ b/Terminal.cpp
+@@ -235,7 +235,8 @@ std::shared_ptr<Channel> Terminal::openBasicChannel(std::weak_ptr<omapi::SecureE
+         return nullptr;
+     }
+ 
+-    LOG(INFO) << __func__ << ": basic channel opened, select response: " << hex2string(selectResponse);
++    LOG(INFO) << __func__ << ": basic channel opened, response length: "
++              << selectResponse.size();
+     auto basicChannel = std::make_shared<Channel>(std::move(session), this, 0, selectResponse, aid, listener);
+     mChannels.insert(std::make_pair(0, basicChannel));
+     mDefaultApplicationSelectedOnBasicChannel = false;
+@@ -268,8 +269,8 @@ std::shared_ptr<Channel> Terminal::openLogicalChannel(std::weak_ptr<omapi::Secur
+ 
+     int channelNumber = aidlRs.channelNumber;
+     std::vector<uint8_t> selectResponse = aidlRs.selectResponse;
+-    LOG(INFO) << __func__ << ": channel " << channelNumber
+-              << ", select response: " << hex2string(selectResponse);
++    LOG(INFO) << __func__ << ": logical channel opened, response length: "
++              << selectResponse.size();
+ 
+     auto logicalChannel = std::make_shared<Channel>(std::move(session), this, channelNumber, selectResponse, aid, listener);
+     mChannels.insert(std::make_pair(channelNumber, logicalChannel));
+@@ -404,7 +405,7 @@ std::vector<uint8_t> Terminal::getAtr() {
+         return atr;
+     }
+     if (DEBUG) {
+-        LOG(INFO) << "ATR: " << hex2string(atr);
++        LOG(INFO) << "ATR length: " << atr.size();
+     }
+     return atr;
+ }
